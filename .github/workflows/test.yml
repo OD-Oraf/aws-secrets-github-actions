@@ -4,6 +4,9 @@ name: CI
 
 # Controls when the workflow will run
 on:
+  push:
+    branches:
+      - main
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -30,6 +33,22 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
           retry-max-attempts: 2
+
+      - name: Get SSM Parameters
+        run: |
+          # Get ruleset validation parameter
+          RULESET_VALIDATION=$(aws ssm get-parameter --name "/mulesoft/anypoint-cli/ruleset-validation" --query "Parameter.Value" --output text)
+          echo "RULESET_VALIDATION=$RULESET_VALIDATION" >> $GITHUB_ENV
+          
+          # Get mule rulesets parameter
+          MULE_RULESETS=$(aws ssm get-parameter --name "/mulesoft/anypoint-cli/mule-rulesets" --query "Parameter.Value" --output text)
+          echo "MULE_RULESETS=$MULE_RULESETS" >> $GITHUB_ENV
+          
+          # Get ruleset validation command parameter
+          RULESET_VALIDATION_CMD=$(aws ssm get-parameter --name "/mulesoft/anypoint-cli/ruleset-validation-command" --query "Parameter.Value" --output text)
+          echo "RULESET_VALIDATION_CMD=$RULESET_VALIDATION_CMD" >> $GITHUB_ENV
+          
+          echo "Successfully retrieved all SSM parameters"
 
       - name: Get secret from AWS Secrets Manager
         run: |
