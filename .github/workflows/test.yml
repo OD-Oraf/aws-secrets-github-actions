@@ -52,10 +52,34 @@ jobs:
 
       - name: Get secret from AWS Secrets Manager
         run: |
-          SECRET_VALUE=$(aws secretsmanager get-secret-value --secret-id example_secret --query 'SecretString' --output text)
-          echo "Secret value retrieved successfully"
-          # Use the secret value in your workflow
-          # echo "::add-mask::$SECRET_VALUE"  # Uncomment to mask the secret in logs
+          # Get the secret and parse the JSON
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id example-secret --query 'SecretString' --output text)
+          
+          # Extract individual values and store them as environment variables
+          echo "SECRET_USERNAME=$(echo $SECRET_JSON | jq -r '.username')" >> $GITHUB_ENV
+          echo "SECRET_PASSWORD=$(echo $SECRET_JSON | jq -r '.password')" >> $GITHUB_ENV
+          
+          echo "Secret values retrieved successfully"
+          
+      # Example of how to use the secrets (commented out for security)
+      # - name: Use secrets
+      #   run: |
+      #     echo "Using username: ${{ env.SECRET_USERNAME }}"
+      #     # Never log passwords in production!
+      #     # echo "Using password: ${{ env.SECRET_PASSWORD }}"
+
+      - name: Output Parameters and Secrets
+        run: |
+          echo "============= SSM Parameters ============="
+          echo "Ruleset Validation: ${{ env.RULESET_VALIDATION }}"
+          echo "Mule Rulesets: ${{ env.MULE_RULESETS }}"
+          echo "Ruleset Validation Command: ${{ env.RULESET_VALIDATION_CMD }}"
+          
+          echo "============= Secrets Manager ============="
+          echo "Username: ${{ env.SECRET_USERNAME }}"
+          # WARNING: Outputting secrets to logs is generally not recommended in production
+          # Only doing this for demonstration purposes
+          echo "Password: ${{ env.SECRET_PASSWORD }}"
 
       - name: Run a one-line script
         run: echo Hello, world!
